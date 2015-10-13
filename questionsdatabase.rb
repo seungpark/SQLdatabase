@@ -48,6 +48,10 @@ class Question
     QuestionFollow::most_followed_questions(n)
   end
 
+  def self.most_liked(n)
+    QuestionLike::most_liked_questions(n)
+  end
+
   attr_accessor :id, :title, :body, :author_id
 
   def initialize(options = {})
@@ -128,6 +132,21 @@ class User
 
   def liked_questions
     QuestionLike::liked_questions_for_user_id(id)
+  end
+
+  def average_karma
+    QuestionsDatabase.instance.execute(<<-SQL,id)
+    SELECT
+      CAST(COUNT(question_likes.user_id) AS FLOAT) / COUNT(DISTINCT questions.id)
+    FROM
+      questions
+    LEFT OUTER JOIN
+      question_likes
+    ON
+      questions.id = question_likes.question_id
+    WHERE
+      questions.author_id = ?
+    SQL
   end
 end
 
@@ -322,11 +341,22 @@ class QuestionLike
     SQL
     results['likes']
   end #return number
-#
-#   QuestionLike::
-# Don't just use QuestionLike::likers_for_question_id and count; do a SQL query to just do this.
-# This is more efficient, since the SQL DB will return just the number, and not the data for each of the likes.
-#   attr_accessor :user_id, :question_id
+
+  def self.most_liked_questions(n)
+    results = QuestionsDatabase.instance.execute(<<-SQL, n)
+      SELECT
+        question_id
+      FROM
+        question_likes
+      GROUP BY
+        question_id
+      ORDER BY
+        COUNT(user_id) DESC
+      LIMIT
+        ?
+    SQL
+    results.map { |result| Question.find_by_id(result["question_id"])}
+  end
 
   def initialize(options = {})
     @user_id = options['user_id']
