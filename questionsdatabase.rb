@@ -81,6 +81,28 @@ class Question
     QuestionLike::num_likes_for_question_id(id)
   end
 
+  def save
+    if id.nil?
+      QuestionsDatabase.instance.execute(<<-SQL, title, body, author_id)
+        INSERT INTO
+          questions (title, body, author_id)
+        VALUES
+          (?, ?, ?)
+      SQL
+      @id = QuestionsDatabase.instance.last_insert_row_id
+    else
+      QuestionsDatabase.instance.execute(<<-SQL, title, body, author_id, id)
+        UPDATE
+          questions
+        SET
+          title = ? , body = ? , author_id = ?
+        WHERE
+          questions.id = ?
+      SQL
+    end
+  end
+
+
 end
 
 
@@ -148,6 +170,28 @@ class User
       questions.author_id = ?
     SQL
   end
+
+  def save
+    if id.nil?
+      QuestionsDatabase.instance.execute(<<-SQL, fname, lname)
+        INSERT INTO
+          users (fname, lname)
+        VALUES
+          (?, ?)
+      SQL
+      @id = QuestionsDatabase.instance.last_insert_row_id
+    else
+      QuestionsDatabase.instance.execute(<<-SQL, fname, lname, id)
+        UPDATE
+          users
+        SET
+          fname = ? , lname = ?
+        WHERE
+          users.id = ?
+      SQL
+    end
+  end
+
 end
 
 
@@ -226,6 +270,27 @@ class Reply
 
   def child_reply #one level deep
     Reply.find_by_parent_id(id)
+  end
+
+  def save
+    if id.nil?
+      QuestionsDatabase.instance.execute(<<-SQL, body, question_id, parent_reply_id, reply_author_id)
+        INSERT INTO
+          replies (body, question_id, parent_reply_id, reply_author_id)
+        VALUES
+          (?, ?, ?, ?)
+      SQL
+      @id = QuestionsDatabase.instance.last_insert_row_id
+    else
+      QuestionsDatabase.instance.execute(<<-SQL, body, question_id, parent_reply_id, reply_author_id, id)
+        UPDATE
+          replies
+        SET
+          body = ? , question_id = ? , parent_reply_id = ?, reply_author_id = ?
+        WHERE
+          replies.id = ?
+      SQL
+    end
   end
 
 end
