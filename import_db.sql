@@ -51,32 +51,50 @@ INSERT INTO
   users (fname, lname)
 VALUES
   ('Ursula', 'Goldstein'),
-  ('Seung', 'Park');
+  ('Seung', 'Park'),
+  ('John', 'Smith'),
+  ('Julie', 'Andrews');
 
 INSERT INTO
   questions (title, body, author_id)
 VALUES
   ('Hello Friend', 'Hello! How are you doing?', 1),
-  ('Bye Friend', 'When are you coming back?', 2);
+  ('Bye Friend', 'When are you coming back?', 2),
+  ('Please Help!', 'Can someone explain SQL to me?', 1),
+  ('Explore!', 'Where can i find some gold?', 3),
+  ('Quick Question!', 'Why does no one like me?', 4);
 
 INSERT INTO
   replies (body, question_id, parent_reply_id, reply_author_id)
 VALUES
   ('I am doing well!', 1, NULL, 2),
   ('That is great!', 1, 1, 1),
-  ('On Monday!', 2, NULL, 1);
+  ('On Monday!', 2, NULL, 1),
+  ('I am coming back on Tuesday', 2, NULL, 3),
+  ('Ok cool!', 2, 3, 4),
+  ('Because you use INNER JOINS', 5, NULL, 1),
+  ('Use OUTER JOINS!', 5, 6, 2),
+  ('Still no answer...', 4, NULL, 3);
 
 INSERT INTO
   question_follows(question_id, follower_id)
 VALUES
   (1,2),
-  (2,1);
+  (2,1),
+  (2,4),
+  (5,1),
+  (5,2),
+  (4,4);
 
 INSERT INTO
   question_likes(question_id, user_id)
 VALUES
   (1,2),
-  (2,1);
+  (2,1),
+  (2,3),
+  (2,4),
+  (4,2),
+  (4,1);
 
 
 -- cat import_db.sql | sqlite3 questions.db
