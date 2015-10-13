@@ -44,6 +44,10 @@ class Question
     results.map { |result| Question.new(result) }
   end
 
+  def self.most_followed(n)
+    QuestionFollow::most_followed_questions(n)
+  end
+
   attr_accessor :id, :title, :body, :author_id
 
   def initialize(options = {})
@@ -63,6 +67,14 @@ class Question
 
   def followers
     QuestionFollow.followers_for_question_id(id)
+  end
+
+  def likers
+    QuestionLike::likers_for_question_id(id)
+  end
+
+  def num_likes
+    QuestionLike::num_likes_for_question_id(id)
   end
 
 end
@@ -112,6 +124,10 @@ class User
 
   def followed_questions
     QuestionFollow.followed_questions_for_user_id(id)
+  end
+
+  def liked_questions
+    QuestionLike::liked_questions_for_user_id(id)
   end
 end
 
@@ -264,28 +280,53 @@ class QuestionLike
   def self.likers_for_question_id(question_id)
     results = QuestionsDatabase.instance.execute(<<-SQL, question_id)
       SELECT
-        *
+        user_id
       FROM
         question_likes
+      INNER JOIN
+        users
+      ON
+        question_likes.user_id = users.id
       WHERE
         question_id = ?
     SQL
-    results.map { |result| QuestionLike.new(result) }
+
+    results.map { |result| User.find_by_id(result["user_id"]) }
   end
 
   def self.liked_questions_for_user_id(user_id)
     results = QuestionsDatabase.instance.execute(<<-SQL, user_id)
       SELECT
-        *
+        question_id
       FROM
         question_likes
+      INNER JOIN
+        questions
+      ON
+        question_likes.question_id = questions.id
       WHERE
         user_id = ?
     SQL
-    results.map { |result| QuestionLike.new(result) }
+    results.map { |result| Question.find_by_id(result['question_id']) }
   end
 
-  attr_accessor :user_id, :question_id
+
+  def self.num_likes_for_question_id(question_id)
+    results = QuestionsDatabase.instance.get_first_result(<<-SQL, question_id)
+      SELECT
+        COUNT(user_id) AS likes
+      FROM
+        question_likes
+      WHERE
+        question_id = ?
+    SQL
+    results['likes']
+  end #return number
+#
+#   QuestionLike::
+# Don't just use QuestionLike::likers_for_question_id and count; do a SQL query to just do this.
+# This is more efficient, since the SQL DB will return just the number, and not the data for each of the likes.
+#   attr_accessor :user_id, :question_id
 
   def initialize(options = {})
     @user_id = options['user_id']
